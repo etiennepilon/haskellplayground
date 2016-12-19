@@ -15,11 +15,21 @@ isEncrypt _ = False
 
 wordToInt = fromIntegral . toInteger
 
+zipBytesWith :: (Word8 -> Word8 -> Word8) -> B.ByteString -> B.ByteString -> B.ByteString
+zipBytesWith f a b = B.pack $ B.zipWith f a b 
+
+encodeBytesToBase64 :: B.ByteString -> B.ByteString
+encodeBytesToBase64 = B64.encode
+
+encodeStringToHex :: B.ByteString -> B.ByteString
+encodeStringToHex = B16.encode
+
 decodeBase64String :: String -> B.ByteString
 decodeBase64String = B64.decodeLenient . C8.pack
 
 decodeHexString :: String -> B.ByteString
 decodeHexString = fst . B16.decode . C8.pack
+
 
 stringToBytes :: String -> B.ByteString
 stringToBytes = C8.pack
