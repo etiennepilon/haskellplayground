@@ -25,3 +25,5 @@ challenge3 = snd $ head $ L.sortBy (\a b -> flip compare (fst a) (fst b))$ map (
     countCharacter n bs = B.length $ B.filter (==n) bs
     decryptWithKey n = singleByteXor msg n
     msg = decodeHexString "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+
+challenge4 str = str
