@@ -53,3 +53,44 @@ challenge5 = encodeStringToHex $ repeatedXOR msg key
   where 
     msg = stringToBytes "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
     key = stringToBytes "ICE"
+
+
+-- We split the cipher in blocks of n key size. Then, we take the first 6 blocks and we compute the hamming distance of all combinations.
+-- Technically, the key should have the smallest normalized hamming distance
+--keySize :: (Ord a, Fractional a) => B.ByteString -> [(a, Int)]
+keySize cipher = snd . head $ L.sortBy (\x y -> compare (fst x) (fst y)) $ map hammingDistanceForKeySize [2..40]
+  where
+    hammingDistanceForKeySize n = ((realToFrac $ sum $ map (\(x, y) -> hammingDistance x y) (sampleCombinationsForKeySize n)) / (realToFrac n), n)
+    sampleCombinationsForKeySize n = combinations $ take 6 $ splitEvery n cipher
+
+characterHistogram xs = map charFrequency [1..255]
+  where
+    charFrequency n = (n, 100.0 * (realToFrac $ length $ filter (==n) chars)/(realToFrac l))
+    chars = B.unpack xs 
+    l = B.length xs
+
+-- find the percentage of letter from the histogram (Char, percentage)
+percentageOfLettersFromHistogram hist = sum $ map (\(n, p) -> if isCaeserChar n then p else 0.0) hist
+  where 
+    isCaeserChar n = (n >= 63 && n <= 90) || (n >= 97 && n <= 122) || n == 32 || n == 33
+
+checkAllKeysForCipher xs = take 3 $ L.sortBy (\x y -> flip compare (snd x) (snd y)) decodedCiphers 
+  where
+    decodedCiphers = map (applyKeyAndCheckHistogram xs) [1..255]
+
+applyKeyAndCheckHistogram cipher key = (key, percentageOfLetters) 
+  where
+    decodedCipher = singleByteXor cipher key
+    hist = characterHistogram decodedCipher
+    percentageOfLetters = percentageOfLettersFromHistogram hist
+    
+-- We need to find the key Size
+-- Then, transpose the bytestring so that all the bytes that would be xored with the same character are in the same array.
+challenge6 str = answer
+  where
+    answer = B.concat [stringToBytes "Key value: ", keyTest, stringToBytes "Message Value: ", repeatedXOR msg keyTest]
+    keyTest = B.pack $ map (fst . head) potentialKeys
+    potentialKeys = map checkAllKeysForCipher cipherColumns
+    cipherColumns = B.transpose $ splitEvery kSize msg
+    msg = decodeBase64String str
+    kSize = keySize msg
