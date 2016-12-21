@@ -103,3 +103,20 @@ challenge7 str = AES.crypt' AES.ECB key initVector AES.Decrypt msg
     key = C8.pack "YELLOW SUBMARINE"
     initVector = B.pack $ replicate 16 (0::Word8)
     msg = decodeBase64String str
+
+cipherBlocksHammingDistances :: B.ByteString -> ([Int], B.ByteString)
+cipherBlocksHammingDistances xs = (map (\(x, y) -> hammingDistance x y) blockCombinations, xs)
+  where
+    blocks = splitEvery 16 xs
+    blockCombinations = combinations blocks
+
+--stringWithMostRedundancy :: [B.ByteString] -> B.ByteString
+stringWithMostRedundancy xs = snd $ head $ L.sortBy (\x y -> flip compare (fst x) (fst y)) $ blocksWithHammingDistance
+  where
+    blocksWithHammingDistance = map (\x -> (numberOfZeros $ fst x, snd x)) $ map cipherBlocksHammingDistances xs  
+    numberOfZeros = length . filter (==0)
+
+challenge8 str = aesECBEncryptedString
+  where
+    msgs = map decodeHexString (lines str)
+    aesECBEncryptedString = stringWithMostRedundancy msgs
