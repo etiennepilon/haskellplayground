@@ -23,7 +23,7 @@ runChallengeNoInput :: B.ByteString -> IO()
 runChallengeNoInput = putStrLn . show
 
 main = do
-  (openFile' "dataset/challenge6.txt") >>= (runChallenge challenge6)
+  (openFile' "dataset/challenge7.txt") >>= (runChallenge challenge7)
   --runChallengeNoInput challenge3
   --putStrLn $ show challenge5
   return ()

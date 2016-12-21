@@ -5,6 +5,8 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import Data.Bits
 import qualified Data.List as L
+import qualified Codec.Crypto.AES as AES
+import Data.Word
 
 challenge1 :: B.ByteString
 challenge1 = encodeBytesToBase64 $ decodeHexString hexStr
@@ -94,3 +96,10 @@ challenge6 str = answer
     cipherColumns = B.transpose $ splitEvery kSize msg
     msg = decodeBase64String str
     kSize = keySize msg
+
+-- Tested only with the AES Library
+challenge7 str = AES.crypt' AES.ECB key initVector AES.Decrypt msg
+  where
+    key = C8.pack "YELLOW SUBMARINE"
+    initVector = B.pack $ replicate 16 (0::Word8)
+    msg = decodeBase64String str
