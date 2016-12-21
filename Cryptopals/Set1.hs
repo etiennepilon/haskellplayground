@@ -2,6 +2,7 @@ module Set1 where
 
 import MyCryptoUtil
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as C8
 import Data.Bits
 import qualified Data.List as L
 
@@ -19,11 +20,36 @@ challenge2 = encodeStringToHex $ zipBytesWith xor s1 s2
 -- Assumption: The character that has the most chance of being repeated is
 -- space (=32). The algorithm will test all keys and take the one with most space
 challenge3 :: B.ByteString
-challenge3 = snd $ head $ L.sortBy (\a b -> flip compare (fst a) (fst b))$ map (\x->(countCharacter 32 x, x)) bruteForceDecryptionMsgs
+challenge3 = answer
   where
-    bruteForceDecryptionMsgs = map decryptWithKey [1..255] 
-    countCharacter n bs = B.length $ B.filter (==n) bs
-    decryptWithKey n = singleByteXor msg n
+    answer = B.concat [(C8.pack ("The Encryption key is: " ++ show (fst singleByteXorMsg) ++ " and the message is: ")), snd singleByteXorMsg]
+    singleByteXorMsg = findSingleByteXOR msg
     msg = decodeHexString "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
 
-challenge4 str = str
+-- Receives a string a returns the one that has the most number of spaces
+--findSingleByteXOR :: B.ByteString -> (Int, B.ByteString)
+findSingleByteXOR msg = takeStringWithMostSpaces
+  where
+    takeStringWithMostSpaces = snd $ head $ L.sortBy (\a b -> flip compare (fst a) (fst b))$ map (\x->(countCharacter 32 (snd x), x)) bruteForceDecrypt
+    countCharacter n bs = B.length $ B.filter (==n) bs
+    bruteForceDecrypt = map (\x-> (x, singleByteXor msg x)) [1..255]
+
+
+findSingleByteXORPossibilities msg = takeStringWithMostSpaces
+  where
+    takeStringWithMostSpaces = map snd $ take 2 $ L.sortBy (\a b -> flip compare (fst a) (fst b))$ map (\x->(countCharacter 32 (snd x), x)) bruteForceDecrypt
+    countCharacter n bs = B.length $ B.filter (==n) bs
+    bruteForceDecrypt = map (\x-> (x, singleByteXor msg x)) [1..255]
+
+
+challenge4 fileStrings = mostLikelyXorMsg 
+  where
+    mostLikelyXorMsg =  map snd $ take 3 $ L.sortBy (\a b -> flip compare (fst a) (fst b))$ map (\x->(countCharacter 32 (snd x), x)) xoredMsgs
+    countCharacter n bs = B.length $ B.filter (==n) bs
+    xoredMsgs = concatMap (findSingleByteXORPossibilities . decodeHexString) msgs
+    msgs = lines fileStrings
+
+challenge5 = encodeStringToHex $ repeatedXOR msg key
+  where 
+    msg = stringToBytes "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
+    key = stringToBytes "ICE"

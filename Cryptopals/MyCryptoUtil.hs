@@ -45,6 +45,10 @@ hammingDistance a b = sum $ map popCount $ B.zipWith xor a b
 
 singleByteXor :: B.ByteString -> Word8 -> B.ByteString
 singleByteXor msg n = B.map (xor n) msg
+
+-- Strict ByteString can't cycle multiple times. Thus, it's necesary to convert to string
+repeatedXOR :: B.ByteString -> B.ByteString -> B.ByteString
+repeatedXOR msg key = B.pack $ zipWith xor (B.unpack msg) (cycle $ B.unpack key)
 -- Others
 -- 
 combinations :: [a] -> [(a, a)]

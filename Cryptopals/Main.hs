@@ -8,7 +8,6 @@ import Control.Exception
 import Data.Maybe
 import Data.Either
 
-
 openFile' :: FilePath -> IO (Either IOError String)
 openFile' filename = do
   results <- try $ readFile filename
@@ -20,4 +19,11 @@ runChallenge challenge input = do
     Left err -> print err
     Right contents -> putStrLn $ show $ challenge contents
 
-main = (openFile' "dataset/challenge4.txt") >>= (runChallenge challenge4)
+runChallengeNoInput :: B.ByteString -> IO()
+runChallengeNoInput = putStrLn . show
+
+main = do
+  --(openFile' "dataset/challenge4.txt") >>= (runChallenge challenge4)
+  --runChallengeNoInput challenge3
+  putStrLn $ show challenge5
+  return ()
