@@ -2,11 +2,13 @@ module Main where
 
 import MyCryptoUtil
 import Set1
+import Set2
 import qualified Data.ByteString as B
 import System.IO
 import Control.Exception
 import Data.Maybe
 import Data.Either
+import MyAES
 
 openFile' :: FilePath -> IO (Either IOError String)
 openFile' filename = do
@@ -23,7 +25,7 @@ runChallengeNoInput :: B.ByteString -> IO()
 runChallengeNoInput = putStrLn . show
 
 main = do
-  (openFile' "dataset/challenge8.txt") >>= (runChallenge challenge8)
+  --(openFile' "dataset/challenge10.txt") >>= (runChallenge challenge10)
   --runChallengeNoInput challenge3
-  --putStrLn $ show challenge5
+--  putStrLn $ show challenge9
   return ()
