@@ -13,28 +13,32 @@ import Data.Maybe
 -- Types 
 type Coordinate = (Int, Int)
 type Move = (Int, Int)
-type WhitePieces = [Piece]
-type BlackPieces = [Piece]
 type BoardSquare = (Coordinate, Maybe Piece)
 --
 -- Data constructors
-data Board = Board {whitePieces::[Piece], blackPieces::[Piece], boardSquares::[BoardSquare]}
+data Board = Board {boardSquares::[BoardSquare]}
 --  deriving Show
 instance Show Board where
-  show b@(Board _ _ sqrs) = rowSplit ++ "\n" ++ concatMap showSquare sqrs
+  show b@(Board sqrs) = rowSplit ++ "\n" ++ concatMap showSquare sqrs ++ bottomIndexes
     where
       showSquare ((x, y), p)
         | x == 8 = squareDisplay p ++ "\n" ++ rowSplit ++ "\n"
-        | x == 1 = "| " ++ squareDisplay p
+        | x == 1 = (show y) ++ " |" ++ squareDisplay p
         | otherwise = squareDisplay p
       squareDisplay p 
         | isJust p = " " ++ (show $ fromJust p) ++ " |"
         | otherwise = "    |"
       rowSplit = replicate 42 '-'
+      bottomIndexes = "  " ++ concatMap (\x -> "  " ++ show x ++ "  ") [1..8]
 
 data Piece = Piece {pieceName::PieceName, pieceColor::PieceColor, pieceCoord::Coordinate}
 instance Show Piece where
   show p = show (pieceColor p) ++ show (pieceName p)
+instance Eq Piece where
+  (==) p1 p2 = pieceCoord p1 == pieceCoord p2
+instance Ord Piece where
+  compare p1 p2 = compare (pieceCoord p1) (pieceCoord p2)
+
 data PieceName = Pawn | Rook | Knight | Bishop | Queen | King
 instance Show PieceName where
   show Pawn = "P"
@@ -48,7 +52,7 @@ instance Show PieceColor where
   show White = "w"
   show Black = "b"
 
-initialBoard = Board wPieces bPieces initializeSquares 
+initialBoard = Board initializeSquares 
   where
     initializeSquares = map squareAt [(x, y) | y <- [8, 7, 6, 5, 4, 3, 2, 1], x <- [1..8]] -- List comprehension built like this to avoid sorting in instance Show
     squareAt coord 
@@ -73,6 +77,19 @@ initialBoard = Board wPieces bPieces initializeSquares
 -- Board functions
 --
 
+whitePieces :: Board -> [Piece]
+whitePieces board = concatMap (extract . snd) (boardSquares board)
+  where
+    extract Nothing = []
+    extract (Just (Piece _ Black _)) = []
+    extract p = [fromJust p]
+
+blackPieces :: Board -> [Piece]
+blackPieces board = concatMap (extract . snd) (boardSquares board)
+  where
+    extract Nothing = []
+    extract (Just (Piece _ White _)) = []
+    extract p = [fromJust p]
 
 -- Board dimensions are from (1, 1) to (8, 8)
 isInBoard :: Coordinate -> Bool
@@ -80,13 +97,31 @@ isInBoard (x, y) = x > 0  && x < 9 && y > 0 && y < 9
 
 hasPieceAt :: Board -> Coordinate -> Bool
 hasPieceAt board coord
-  | not $ isInBoard coord = False
   | isNothing piece = False
   | otherwise = True
   where
-    piece = fromJust $ lookup coord (boardSquares board)
+    piece = pieceAt board coord
 
---pieceAt :: Board -> Coordinate -> Maybe Piece
+hasWhitePieceAt :: Board -> Coordinate -> Bool
+hasWhitePieceAt board coord
+  | isNothing piece = False
+  | isBlack $ fromJust piece = False
+  | otherwise = True
+  where
+    piece = pieceAt board coord
+
+hasBlackPieceAt :: Board -> Coordinate -> Bool
+hasBlackPieceAt board coord
+  | isNothing piece = False
+  | isBlack $ fromJust piece = False
+  | otherwise = True
+  where
+    piece = pieceAt board coord
+
+pieceAt :: Board -> Coordinate -> Maybe Piece
+pieceAt board coord 
+  | not $ isInBoard coord = Nothing
+  | otherwise = fromJust $ lookup coord (boardSquares board)
 
 -- Pieces functions
 --
@@ -95,14 +130,29 @@ isWhite _ = False
 
 isBlack (Piece _ Black _) = True
 isBlack _ = False
+
+movedPiece :: Piece -> Coordinate -> Piece
+movedPiece (Piece n c (x, y)) (a, b) = Piece n c (x + a, y + b)
 -- Pawns
 --
-{-
--- It has to be at initial position AND have free space
-pawnInitialMove :: Board -> Piece -> Board
-pawnInitialMove b@(Board wPieces bPieces sqrs) p@(Piece _ color (x, y))
-  | isWhite p && y == 2 && 
 
+{-    
+pawnForward :: Board -> Piece -> [Board]
+pawnForward board piece
+  | isWhite piece && not $ hasPieceAt (pieceCoordWithMove (0, 1)) = 
+  
+
+--whiteMoves :: Board -> [Board]
+--whiteMoves board = concatMap (nextMoves board) (whitePieces board)
+nextMoves :: Board -> Piece -> [Board]
+nextMoves board p@(Piece Pawn _ _) = pawnMoves board p
+nextMoves board p@(Piece Rook _ _) = rookMoves board p
+nextMoves board p@(Piece Bishop _ _) = bishopMoves board p
+nextMoves board p@(Piece Knight _ _) = knightMoves board p
+nextMoves board p@(Piece King _ _) = kingMoves board p
+nextMoves board p@(Piece Queen _ _) = queenMoves board p
+-}
+{-
 genericMoves (Piece Knight _ (x, y)) = map (\(a, b) -> (x + a, y + b)) knightMoves
   where
     knightMoves = rotate ((-1), 2) ++ rotate (1, 2)
